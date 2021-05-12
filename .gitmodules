@@ -1,0 +1,3 @@
+[submodule "tiles-recognition"]
+	path = tiles-recognition
+	url = https://github.com/braille-systems/tiles-recognition.git
