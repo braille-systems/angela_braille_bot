@@ -30,7 +30,7 @@ def photo(message):
     with open(tmp_dir / img_input_filename, "wb") as new_file:
         new_file.write(downloaded_file)
 
-    Popen([sys.executable, "tiles-recognition/src/main.py", "-vv", tmp_dir])
+    Popen([sys.executable, "tiles-recognition/src/main.py", "-vv", tmp_dir]).wait()
 
     with open(Path("out") / "result-image.png", "rb") as img:
         bot.send_photo(message.chat.id, img)
