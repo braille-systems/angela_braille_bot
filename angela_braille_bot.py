@@ -39,9 +39,13 @@ def photo(message):
 
     out_path = Path("out")
     with open(out_path / "result-text.txt", encoding="utf8") as out_txt:
-        bot.reply_to(message, "\n".join(out_txt.readlines()))
+        recognized_letters = [line.strip() for line in out_txt.readlines()]
+        if max(map(len, recognized_letters)) == 0:
+            bot.reply_to(message, "Я поискала на этой картинке плитки Брайля, но не нашла.")
+            return
+        bot.reply_to(message, "\n".join(recognized_letters))
 
-    with open(Path("out") / "result-image.png", "rb") as img:
+    with open(out_path / "result-image.png", "rb") as img:
         bot.send_photo(message.chat.id, img)
 
 
