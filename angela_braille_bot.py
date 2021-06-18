@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 from pathlib import Path
 from subprocess import Popen
 
@@ -25,6 +26,9 @@ def send_welcome(message):
                                       "Распознавание страницы (с постобработкой)")):
         with open(Path("doc") / photo_file_name, "rb") as img:
             bot.send_photo(message.chat.id, img, caption=caption)
+    bot.send_message(message.chat.id, "Больше примеров входных данных "
+                                      "[на диске](https://csspbstu-my.sharepoint.com/:f:/g/personal/zuev_va_edu_spbstu_ru/Egj-vMvAMj5JtmX35kTYzn0BYSkJyw7BfL96AKa0i1BhMw?e=CVZMbm)",
+                     parse_mode="MarkdownV2")
 
 
 @bot.callback_query_handler(func=lambda call: True)
@@ -82,4 +86,8 @@ def photo(message):
 
 
 if __name__ == "__main__":
-    bot.polling(none_stop=True)
+    while True:
+        try:
+            bot.polling(none_stop=True)
+        except Exception:
+            pass
