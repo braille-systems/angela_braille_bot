@@ -30,10 +30,10 @@ def post_form(filename: Path) -> str:
     r = requests.post(url=url, files=files, data=data)
 
     id_match = re.search(r"url: \"/result_test/(.*)/\"", r.text)
-    groups = id_match.groups()
+    groups = id_match.groups()  # type: ignore
     if len(groups) != 1:
         raise RuntimeError("unable to find the job ID in the returned web page")
-    return id_match.groups()[0]
+    return id_match.groups()[0]  # type: ignore
 
 
 def result_ready(id: str) -> bool:
