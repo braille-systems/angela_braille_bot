@@ -21,7 +21,7 @@ base_url = "https://angelina-reader.ru"
 
 def post_form(filename: Path) -> str:
     files = {"file": open(file=str(filename), mode="rb")}
-    data = {"has_public_confirm": "False", "lang": "RU"}
+    data = {"has_public_confirm": "False", "lang": "RU", "process_2_sides": "False"}
     url = base_url + "/upload_photo/"
     r = requests.post(url=url, files=files, data=data)
 
