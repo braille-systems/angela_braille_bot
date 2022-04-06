@@ -3,10 +3,14 @@
 file: наше фото
 has_public_confirm: False
 lang: RU
-2. Будет возвращена HTML-страница, в которой можно где-то в javascript-коде найти некий длинный ID (строка типа url: "/result_test/_88514a1791fe4b92a9ba8d83eda205d7/",), который нам понадобится для получения результата.
-3. Нужно проверять URL https://angelina-reader.ru/result_test/ID, например, https://angelina-reader.ru/result_test/_88514a1791fe4b92a9ba8d83eda205d7/
+2. Будет возвращена HTML-страница, в которой можно где-то в javascript-коде найти некий длинный ID
+(строка типа url: "/result_test/_88514a1791fe4b92a9ba8d83eda205d7/"),
+который нам понадобится для получения результата.
+3. Нужно проверять URL https://angelina-reader.ru/result_test/ID, например,
+ https://angelina-reader.ru/result_test/_88514a1791fe4b92a9ba8d83eda205d7/
 Эта страница возвращает текст с одним словом: True или False.
-4. Когда на предыдущем шаге получаем True, можно отправиться на страницу https://angelina-reader.ru/result/ID, где уже будет HTML, из которого можно вытянуть распознанный текст и URL фото-результата.
+4. Когда на предыдущем шаге получаем True, можно отправиться на страницу https://angelina-reader.ru/result/ID,
+где уже будет HTML, из которого можно вытянуть распознанный текст и URL фото-результата.
 
 """
 from pathlib import Path

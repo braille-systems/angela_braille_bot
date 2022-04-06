@@ -1,6 +1,5 @@
 import os
 import sys
-import time
 from pathlib import Path
 from subprocess import Popen
 
@@ -12,12 +11,12 @@ bot = telebot.TeleBot(os.environ["token"])
 
 @bot.message_handler(commands=["start", "help"])
 def send_welcome(message):
-    bot.reply_to(message, "\n".join(("Привет\! Я робот Анжела\!",
-                                     "Я умею распознавать текст Брайля по фотографии\, "
-                                     "используя программу И\. Оводова "
-                                     "[Angelina Braille Reader](http://angelina-reader.ru/)\. "
-                                     "Также я могу находить на картинке *плитки Брайля*\. "
-                                     "Отправьте мне фото\, и я дам ответ\.")), parse_mode="MarkdownV2")
+    bot.reply_to(message, "\n".join((r"Привет\! Я робот Анжела\!",
+                                     r"Я умею распознавать текст Брайля по фотографии\, "
+                                     r"используя программу И\. Оводова "
+                                     r"[Angelina Braille Reader](http://angelina-reader.ru/)\. "
+                                     r"Также я могу находить на картинке *плитки Брайля*\. "
+                                     r"Отправьте мне фото\, и я дам ответ\.")), parse_mode="MarkdownV2")
 
     bot.send_message(message.chat.id, "Вот примеры:")
     for photo_file_name, caption in (("recognition-example.jpg", "Распознавание плиток"),
@@ -27,7 +26,9 @@ def send_welcome(message):
         with open(Path("doc") / photo_file_name, "rb") as img:
             bot.send_photo(message.chat.id, img, caption=caption)
     bot.send_message(message.chat.id, "Больше примеров входных данных "
-                                      "[на диске](https://csspbstu-my.sharepoint.com/:f:/g/personal/zuev_va_edu_spbstu_ru/Egj-vMvAMj5JtmX35kTYzn0BYSkJyw7BfL96AKa0i1BhMw?e=CVZMbm)",
+                                      "[на диске](https://csspbstu-my.sharepoint.com/:f:/g/"
+                                      "personal/zuev_va_edu_spbstu_ru/Egj-vMvAMj5JtmX35kTYz"
+                                      "n0BYSkJyw7BfL96AKa0i1BhMw?e=CVZMbm)",
                      parse_mode="MarkdownV2")
 
 
