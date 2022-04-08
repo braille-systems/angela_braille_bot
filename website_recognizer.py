@@ -3,10 +3,14 @@
 file: наше фото
 has_public_confirm: False
 lang: RU
-2. Будет возвращена HTML-страница, в которой можно где-то в javascript-коде найти некий длинный ID (строка типа url: "/result_test/_88514a1791fe4b92a9ba8d83eda205d7/",), который нам понадобится для получения результата.
-3. Нужно проверять URL https://angelina-reader.ru/result_test/ID, например, https://angelina-reader.ru/result_test/_88514a1791fe4b92a9ba8d83eda205d7/
+2. Будет возвращена HTML-страница, в которой можно где-то в javascript-коде найти некий длинный ID
+(строка типа url: "/result_test/_88514a1791fe4b92a9ba8d83eda205d7/"),
+который нам понадобится для получения результата.
+3. Нужно проверять URL https://angelina-reader.ru/result_test/ID, например,
+ https://angelina-reader.ru/result_test/_88514a1791fe4b92a9ba8d83eda205d7/
 Эта страница возвращает текст с одним словом: True или False.
-4. Когда на предыдущем шаге получаем True, можно отправиться на страницу https://angelina-reader.ru/result/ID, где уже будет HTML, из которого можно вытянуть распознанный текст и URL фото-результата.
+4. Когда на предыдущем шаге получаем True, можно отправиться на страницу https://angelina-reader.ru/result/ID,
+где уже будет HTML, из которого можно вытянуть распознанный текст и URL фото-результата.
 
 """
 from pathlib import Path
@@ -26,10 +30,10 @@ def post_form(filename: Path) -> str:
     r = requests.post(url=url, files=files, data=data)
 
     id_match = re.search(r"url: \"/result_test/(.*)/\"", r.text)
-    groups = id_match.groups()
+    groups = id_match.groups()  # type: ignore
     if len(groups) != 1:
         raise RuntimeError("unable to find the job ID in the returned web page")
-    return id_match.groups()[0]
+    return id_match.groups()[0]  # type: ignore
 
 
 def result_ready(id: str) -> bool:
