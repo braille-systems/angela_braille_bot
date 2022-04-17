@@ -1,7 +1,5 @@
 import os
-import sys
 from pathlib import Path
-from subprocess import Popen
 
 import telebot  # type: ignore
 import tempfile
