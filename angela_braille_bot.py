@@ -6,6 +6,8 @@ from subprocess import Popen
 import telebot  # type: ignore
 import tempfile
 
+from website_recognizer import process_photo
+
 bot = telebot.TeleBot(os.environ["token"])
 
 
@@ -15,16 +17,10 @@ def send_welcome(message):
                                      r"Я умею распознавать текст Брайля по фотографии\, "
                                      r"используя программу И\. Оводова "
                                      r"[Angelina Braille Reader](http://angelina-reader.ru/)\. "
-                                     r"Также я могу находить на картинке *плитки Брайля*\. "
                                      r"Отправьте мне фото\, и я дам ответ\.")), parse_mode="MarkdownV2")
 
-    bot.send_message(message.chat.id, "Вот примеры:")
-    for photo_file_name, caption in (("recognition-example.jpg", "Распознавание плиток"),
-                                     ("angelina-example/jane_eyre_p0011.marked.jpg", "Распознавание страницы"),
-                                     ("angelina-example/jane_eyre_p0011.marked.improved.jpg",
-                                      "Распознавание страницы (с постобработкой)")):
-        with open(Path("doc") / photo_file_name, "rb") as img:
-            bot.send_photo(message.chat.id, img, caption=caption)
+    with open(Path("doc") / "angelina-example/jane_eyre_p0011.marked.jpg", "rb") as img:
+        bot.send_photo(message.chat.id, img, caption="Вот пример")
     bot.send_message(message.chat.id, "Больше примеров входных данных "
                                       "[на диске](https://csspbstu-my.sharepoint.com/:f:/g/"
                                       "personal/zuev_va_edu_spbstu_ru/Egj-vMvAMj5JtmX35kTYz"
@@ -32,38 +28,9 @@ def send_welcome(message):
                      parse_mode="MarkdownV2")
 
 
-@bot.callback_query_handler(func=lambda call: True)
-def iq_callback(query):
-    try:
-        bot.answer_callback_query(query.id)
-        bot.send_message(query.message.chat.id, "начинаю распознавание...")
-        tmp_dir = Path(query.data.split("|")[1])
-
-        if query.data.startswith("tiles"):
-            Popen([sys.executable, "tiles-recognition/src/main.py", "-vv", tmp_dir]).wait()
-
-            out_path = Path("out")
-            with open(out_path / "result-text.txt", encoding="utf8") as out_txt:
-                recognized_letters = [line.strip() for line in out_txt.readlines()]
-                if max(map(len, recognized_letters)) == 0:
-                    bot.reply_to(query.message, "Я поискала на этой картинке плитки Брайля, но не нашла.")
-                    return
-                bot.reply_to(query.message, "\n".join(recognized_letters))
-
-            with open(out_path / "result-image.png", "rb") as img:
-                bot.send_photo(query.message.chat.id, img)
-        else:
-            Popen([sys.executable, "run_local.py", tmp_dir.absolute() / "image.jpg", "-l", "EN", "-o"],
-                  cwd="AngelinaReader").wait()
-            for suffix, caption in (("", "без постобработки"), (".improved", "с постобработкой")):
-                with open(tmp_dir / "image.marked{}.jpg".format(suffix), "rb") as img:
-                    bot.send_photo(query.message.chat.id, img, caption=caption)
-    except Exception:
-        bot.send_message(query.message.chat.id, "извините, произошла ошибка")
-
-
 @bot.message_handler(content_types=['photo'])
 def photo(message):
+    bot.send_message(message.chat.id, "начинаю распознавание...")
     try:
         file_id = message.photo[-1].file_id
         file_info = bot.get_file(file_id)
@@ -72,18 +39,20 @@ def photo(message):
         tmp_root = Path("tmp")
         tmp_root.mkdir(exist_ok=True)
         tmp_dir = Path(tempfile.mkdtemp(dir=tmp_root))
-        img_input_filename = "image.jpg"
+        img_input_filename = tmp_dir / "input.jpg"
 
-        with open(tmp_dir / img_input_filename, "wb") as new_file:
+        with open(img_input_filename, "wb") as new_file:
             new_file.write(downloaded_file)
 
-        keyboard = telebot.types.InlineKeyboardMarkup()
-        keyboard.row(telebot.types.InlineKeyboardButton("Плитки Брайля", callback_data="tiles|" + str(tmp_dir)))
-        keyboard.row(telebot.types.InlineKeyboardButton("Брайлевскую страницу на английском",
-                                                        callback_data="page|" + str(tmp_dir)), )
-        bot.send_message(message.chat.id, "Картинка получена. Что на ней нужно распознать?", reply_markup=keyboard)
-    except Exception:
-        bot.send_message(message.chat.id, "извините, произошла ошибка")  # TODO reduce duplication
+        img_out_filename, text_recognized = process_photo(input_filename=img_input_filename)
+
+        with open(img_out_filename, "rb") as img:
+            bot.send_photo(message.chat.id, img)
+            bot.send_message(message.chat.id, text=text_recognized)
+
+    except Exception as e:
+        bot.send_message(message.chat.id, "извините, произошла ошибка")
+        print(e)
 
 
 if __name__ == "__main__":
