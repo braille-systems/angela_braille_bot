@@ -13,6 +13,7 @@ lang: RU
 где уже будет HTML, из которого можно вытянуть распознанный текст и URL фото-результата.
 
 """
+from bs4 import BeautifulSoup
 from pathlib import Path
 
 import shutil
@@ -42,7 +43,23 @@ def result_ready(id: str) -> bool:
     return True if result.text == "True" else False
 
 
-def get_result(id: str, out_filename: Path) -> None:
+def retrieve_text(id: str) -> str:
+    result_url = f"{base_url}/result/{id}"
+    r = requests.get(result_url)
+    soup = BeautifulSoup(r.text.replace("/br", "br"), "lxml")
+    text_tag = soup.find("div", attrs={"class": "read-card__text"}).find("tt")
+
+    for br_tag in text_tag.findAll("br"):
+        br_tag.replace_with("\n")
+
+    # remove repetitive newlines
+    text = re.sub("\n+", "\n", text_tag.text)
+
+    nonBreakSpace = u"\xa0"
+    return re.sub(nonBreakSpace, " ", text)  # replace non-breaking spaces with normal
+
+
+def get_result(id: str, out_filename: Path) -> str:
     id_no_underscore = id[1:]  # remove underscore
     img_url = f"{base_url}/static/data/results/{id_no_underscore}.marked.jpg"
     img_response = requests.get(img_url, stream=True)
@@ -51,6 +68,8 @@ def get_result(id: str, out_filename: Path) -> None:
     with open(str(out_filename), "wb") as fout:
         shutil.copyfileobj(img_response.raw, fout)
     del img_response
+
+    return retrieve_text(id)
 
 
 def main():
@@ -61,7 +80,8 @@ def main():
 
     out_path = (data_path.parent / "tmp") / (data_path.stem + ".marked.jpg")
     out_path.parent.mkdir(exist_ok=True)
-    get_result(id=job_id, out_filename=out_path)
+    text = get_result(id=job_id, out_filename=out_path)
+    print(text)
 
 
 if __name__ == "__main__":

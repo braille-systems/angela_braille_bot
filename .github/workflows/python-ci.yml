@@ -22,7 +22,7 @@ jobs:
           pip install -r requirements.txt
           pip install -r test/requirements.txt
       - name: static analysis
-        run: python -m flake8 && python -m mypy .
+        run: python -m flake8
       - name: test
         run: python -m pytest test
 
