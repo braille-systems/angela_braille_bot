@@ -13,6 +13,8 @@ lang: RU
 где уже будет HTML, из которого можно вытянуть распознанный текст и URL фото-результата.
 
 """
+from typing import Tuple
+
 from bs4 import BeautifulSoup
 from pathlib import Path
 
@@ -70,6 +72,17 @@ def get_result(id: str, out_filename: Path) -> str:
     del img_response
 
     return retrieve_text(id)
+
+
+def process_photo(input_filename: Path) -> Tuple[Path, str]:
+    job_id = post_form(input_filename)
+    print(job_id)  # TODO log instead of print
+    while not result_ready(job_id):
+        time.sleep(.5)
+
+    out_filename = input_filename.parent / (input_filename.stem + ".marked.jpg")
+    text = get_result(id=job_id, out_filename=out_filename)
+    return out_filename, text
 
 
 def main():
