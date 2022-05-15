@@ -1,5 +1,11 @@
 import os
-from database.db_worker import *
+from database.db_worker import selector_settings
+from database.db_worker import selector_recognition_info
+from database.db_worker import insert_new_user
+from database.db_worker import update_recognition_info
+from database.db_worker import update_settings
+import sqlite3
+
 
 os.chdir("../database")
 
