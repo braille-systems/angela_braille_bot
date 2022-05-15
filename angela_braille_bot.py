@@ -1,12 +1,18 @@
 import os
+import sqlite3
+import tempfile
 from pathlib import Path
 
 import telebot  # type: ignore
-import tempfile
 
 from website_recognizer import process_photo
 
 bot = telebot.TeleBot(os.environ["token"])
+
+# Connect database
+os.chdir("../database")
+db_connector = sqlite3.connect("Braille")
+db_cursor = db_connector.cursor()
 
 
 @bot.message_handler(commands=["start", "help"])
