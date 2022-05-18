@@ -6,12 +6,13 @@ from pathlib import Path
 import telebot  # type: ignore
 
 from website_recognizer import process_photo
+from database.db_worker import db_name
 
 bot = telebot.TeleBot(os.environ["token"])
 
 # Connect database
-os.chdir("../database")
-db_connector = sqlite3.connect("Braille")
+os.chdir("database")
+db_connector = sqlite3.connect(db_name)
 db_cursor = db_connector.cursor()
 
 

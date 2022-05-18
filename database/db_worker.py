@@ -1,6 +1,8 @@
 import sqlite3
 from sqlite3 import Cursor, Connection
 
+db_name = "Braille"
+
 
 def selector_settings(user_id: int, database_cursor: Cursor):
     """Return user settings information"""
