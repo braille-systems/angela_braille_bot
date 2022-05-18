@@ -4,7 +4,7 @@ from database.db_worker import insert_new_user
 from database.db_worker import update_recognition_info, update_settings
 import sqlite3
 
-os.chdir("../database")
+os.chdir("database")
 
 
 def test_selector_settings():
