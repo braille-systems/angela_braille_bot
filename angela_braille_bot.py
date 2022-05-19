@@ -44,7 +44,9 @@ def send_welcome(message):
     if selector_recognition_info(message.chat.id, db_cursor):
         bot.reply_to(message, "А Вы уже зарегистрированы в нашей базе!")
         return
+    bot.send_message(message.chat.id, "Добавляем Вас в базу данных...")
     insert_new_user(database_cursor=db_cursor, connector=db_connector, user_id=message.chat.id)
+    bot.send_message(message.chat.id, "Готово!")
     print_info(message)
 
 
@@ -118,8 +120,9 @@ def process_settings_callback(query: telebot.types.CallbackQuery) -> None:
     for k, v in selector.items():
         prefix = "🔘 " if option == k else ""
         appendix = " (Выбрано)" if option == k else ""
-        item_keyboard.row(telebot.types.InlineKeyboardButton(f"{prefix}{RecognitionParams.options[param]}: {v}{appendix}",
-                                                             callback_data=f"{param}|{str(k)}"))
+        item_keyboard.row(telebot.types.InlineKeyboardButton(
+            f"{prefix}{RecognitionParams.options[param]}: {v}{appendix}",
+            callback_data=f"{param}|{str(k)}"))
     add_back_row(item_keyboard, callback_data=change_settings)
     bot.edit_message_text(
         text=recognition_info,
