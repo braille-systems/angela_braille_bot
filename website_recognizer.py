@@ -76,14 +76,16 @@ class RecognitionParams:
     options = {
         lang_key: "Язык",
         two_sides_key: "Обе стороны",
-        auto_orient_key: "Автоориентация"
+        auto_orient_key: "Автоориентация",
+        has_public_confirm_key: "Согласие на публичное использование изображения"
     }
 
     def get_selector(self) -> dict:
         return {
             self.lang_key: [self.lang_selector, self.lang],
             self.auto_orient_key: [self.true_false_selector, self.auto_orient],
-            self.two_sides_key: [self.true_false_selector, self.two_sides]
+            self.two_sides_key: [self.true_false_selector, self.two_sides],
+            self.has_public_confirm_key: [self.true_false_selector, self.has_public_confirm]
         }
 
     def __repr__(self):

@@ -9,6 +9,7 @@ import telebot  # type: ignore
 
 from website_recognizer import process_photo, RecognitionParams
 from database.db_worker import db_name, insert_new_user, update_recognition_info, selector_recognition_info
+from database.db_worker import update_settings
 
 bot = telebot.TeleBot(os.environ["token"])
 
@@ -106,6 +107,9 @@ def process_settings_callback(query: telebot.types.CallbackQuery) -> None:
         if param == RecognitionParams.auto_orient_key:
             update_shorthand(auto_orientate=selected_value, recognize_both=prev_info.two_sides,
                              language=prev_info.lang)
+        if param == RecognitionParams.has_public_confirm_key:
+            update_settings(database_cursor=db_cursor, connector=db_connector, user_id=query.message.chat.id,
+                            include_in_data=selected_value)
 
     # retrieve recognition settings, display the keyboard
     recognition_info = selector_recognition_info(query.message.chat.id, database_cursor=db_cursor)

@@ -21,8 +21,11 @@ def selector_recognition_info(user_id: int, database_cursor: Cursor) -> Optional
     result = database_cursor.fetchall()
     if not len(result):  # empty result
         return None
+
+    settings = selector_settings(user_id=user_id, database_cursor=database_cursor)
+
     return RecognitionParams(
-        has_public_confirm=False,  # TODO fetch from another table?
+        has_public_confirm=settings[0][3],
         lang=lang_inv_map[result[0][2]],
         two_sides=result[0][3],
         auto_orient=result[0][1]
@@ -31,17 +34,25 @@ def selector_recognition_info(user_id: int, database_cursor: Cursor) -> Optional
 
 def update_settings(database_cursor: Cursor, connector: Connection,
                     user_id: int, email: str = None,
-                    password: str = None, include_in_data: bool = True):
+                    password: str = None, include_in_data: bool = False,
+                    force_null_update: bool = False):
     """Update user settings"""
     database_cursor.execute(
         "UPDATE Settings "
-        "SET email = ?, password = ?, include_in_data = ? "
+        "SET include_in_data = ? "
         "WHERE user_id == ?",
-        (email,
-         password,
-         include_in_data,
+        (include_in_data,
          user_id)
     )
+    if email or force_null_update:
+        database_cursor.execute(
+            "UPDATE Settings "
+            "SET email = ?, password = ?"
+            "WHERE user_id == ?",
+            (email,
+             password,
+             user_id)
+        )
     connector.commit()
 
 
