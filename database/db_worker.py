@@ -1,5 +1,8 @@
 import sqlite3
 from sqlite3 import Cursor, Connection
+from typing import Optional
+
+from website_recognizer import RecognitionParams, Lang, lang_inv_map
 
 db_name = "Braille"
 
@@ -11,11 +14,19 @@ def selector_settings(user_id: int, database_cursor: Cursor):
     return database_cursor.fetchall()
 
 
-def selector_recognition_info(user_id: int, database_cursor: Cursor):
+def selector_recognition_info(user_id: int, database_cursor: Cursor) -> Optional[RecognitionParams]:
     """Returns user recognition settings information"""
     database_cursor.execute("SELECT * FROM Recognition_information WHERE user_id = ?",
                             (user_id,))
-    return database_cursor.fetchall()
+    result = database_cursor.fetchall()
+    if not len(result):  # empty result
+        return None
+    return RecognitionParams(
+        has_public_confirm=False,  # TODO fetch from another table?
+        lang=lang_inv_map[result[0][2]],
+        two_sides=result[0][3],
+        auto_orient=result[0][1]
+    )
 
 
 def update_settings(database_cursor: Cursor, connector: Connection,
@@ -36,14 +47,15 @@ def update_settings(database_cursor: Cursor, connector: Connection,
 
 def update_recognition_info(database_cursor: Cursor, connector: Connection,
                             user_id: int, auto_orientate: bool = True,
-                            language: str = "Ru", recognize_both: bool = True):
+                            language: Lang = Lang.ru, recognize_both: bool = True):
     """Update user recognition information"""
+    # print(str(language))
     database_cursor.execute(
         "UPDATE Recognition_information "
         "SET auto_orientate = ?, language = ?, recognize_both = ? "
         "WHERE user_id == ? ",
         (auto_orientate,
-         language,
+         str(language),
          recognize_both,
          user_id)
     )
@@ -61,6 +73,9 @@ def insert_new_user(database_cursor: Cursor, connector: Connection,
         )
     except sqlite3.IntegrityError:
         pass
+    except Exception as e:
+        print("something went wrong")
+        print(e)
     try:
         database_cursor.execute(
             "INSERT INTO Recognition_information (user_id)"

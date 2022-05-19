@@ -13,6 +13,8 @@ lang: RU
 где уже будет HTML, из которого можно вытянуть распознанный текст и URL фото-результата.
 
 """
+from dataclasses import dataclass
+from enum import Enum
 from typing import Tuple
 
 from bs4 import BeautifulSoup
@@ -26,9 +28,72 @@ import time
 base_url = "https://angelina-reader.ru"
 
 
-def post_form(filename: Path) -> str:
+class Lang(Enum):
+    ru = "RU",
+    en = "EN",
+    greek = "GR",
+    lv = "LV",
+    uzc = "UZ",
+    uzl = "UZL",
+    polski = "PL"
+
+    def __str__(self):
+        return self.value[0]
+
+
+lang_inv_map = {item.value[0]: item for item in Lang}
+
+
+@dataclass
+class RecognitionParams:
+    has_public_confirm: bool
+    lang: Lang
+    two_sides: bool
+    auto_orient: bool
+
+    has_public_confirm_key = "has_public_confirm"
+    lang_key = "lang"
+    two_sides_key = "process_2_sides"
+    auto_orient_key = "find_orientation"
+
+    def get_data_dict(self):
+        return {self.has_public_confirm_key: str(self.has_public_confirm),
+                self.lang_key: self.lang.value[0],
+                self.two_sides_key: str(self.two_sides),
+                self.auto_orient_key: str(self.auto_orient)}
+
+    true_false_selector = {True: "Да", False: "Нет"}
+    lang_selector = {
+        Lang.ru: "Русский",
+        Lang.en: "Английский",
+        Lang.lv: "Латвийский",
+        Lang.greek: "Греческий",
+        Lang.uzc: "Узбекский (Кириллица)",
+        Lang.uzl: "Узбекский (Латиница)",
+        Lang.polski: "Польский"
+    }
+
+    options = {
+        lang_key: "Язык",
+        two_sides_key: "Обе стороны",
+        auto_orient_key: "Автоориентация"
+    }
+
+    def get_selector(self) -> dict:
+        return {
+            self.lang_key: [self.lang_selector, self.lang],
+            self.auto_orient_key: [self.true_false_selector, self.auto_orient],
+            self.two_sides_key: [self.true_false_selector, self.two_sides]
+        }
+
+    def __repr__(self):
+        selector = (f"{RecognitionParams.options[k]}: {v[0][v[1]]}" for k, v in self.get_selector().items())
+        return "Настройки:\n" + "\n".join(selector)
+
+
+def post_form(filename: Path, params: RecognitionParams) -> str:
     files = {"file": open(file=str(filename), mode="rb")}
-    data = {"has_public_confirm": "False", "lang": "RU", "process_2_sides": "False"}
+    data = params.get_data_dict()
     url = base_url + "/upload_photo/"
     r = requests.post(url=url, files=files, data=data)
 
@@ -74,8 +139,8 @@ def get_result(id: str, out_filename: Path) -> str:
     return retrieve_text(id)
 
 
-def process_photo(input_filename: Path) -> Tuple[Path, str]:
-    job_id = post_form(input_filename)
+def process_photo(input_filename: Path, params: RecognitionParams) -> Tuple[Path, str]:
+    job_id = post_form(input_filename, params)
     print(job_id)  # TODO log instead of print
     while not result_ready(job_id):
         time.sleep(.5)
@@ -87,7 +152,8 @@ def process_photo(input_filename: Path) -> Tuple[Path, str]:
 
 def main():
     data_path = Path("data/jane_eyre_p0011.jpg")
-    job_id = post_form(data_path)
+    job_id = post_form(data_path, RecognitionParams(has_public_confirm=False, lang=Lang.en,
+                                                    two_sides=False, auto_orient=False))
     while not result_ready(job_id):
         time.sleep(.5)
 
