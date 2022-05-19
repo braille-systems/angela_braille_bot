@@ -74,7 +74,7 @@ def send_settings(message: telebot.types.Message):
 
 
 def add_back_row(keyboard: telebot.types.InlineKeyboardMarkup, callback_data: str) -> None:
-    keyboard.row(telebot.types.InlineKeyboardButton("Назад", callback_data=callback_data))
+    keyboard.row(telebot.types.InlineKeyboardButton("⬅️ Назад", callback_data=callback_data))
 
 
 def process_settings_callback(query: telebot.types.CallbackQuery) -> None:
@@ -116,8 +116,9 @@ def process_settings_callback(query: telebot.types.CallbackQuery) -> None:
     selector, option = recognition_info.get_selector()[param]
     item_keyboard = telebot.types.InlineKeyboardMarkup()
     for k, v in selector.items():
+        prefix = "🔘 " if option == k else ""
         appendix = " (Выбрано)" if option == k else ""
-        item_keyboard.row(telebot.types.InlineKeyboardButton(f"{RecognitionParams.options[param]}: {v}{appendix}",
+        item_keyboard.row(telebot.types.InlineKeyboardButton(f"{prefix}{RecognitionParams.options[param]}: {v}{appendix}",
                                                              callback_data=f"{param}|{str(k)}"))
     add_back_row(item_keyboard, callback_data=change_settings)
     bot.edit_message_text(
@@ -181,7 +182,11 @@ def photo(message):
 
         with open(img_out_filename, "rb") as img:
             bot.send_photo(message.chat.id, img)
-            bot.send_message(message.chat.id, text=text_recognized)
+            bot.send_message(message.chat.id,
+                             text=text_recognized if len(text_recognized)
+                             else "Брайлевский текст на изображении не обнаружен")
+
+        # send_settings(message) TODO add settings after each recognition (if user chooses to show them in settings)
 
     except Exception as e:
         bot.send_message(message.chat.id, "извините, произошла ошибка")

@@ -75,9 +75,16 @@ class RecognitionParams:
 
     options = {
         lang_key: "Язык",
-        two_sides_key: "Обе стороны",
         auto_orient_key: "Автоориентация",
-        has_public_confirm_key: "Согласие на публичное использование изображения"
+        two_sides_key: "Обе стороны",
+        has_public_confirm_key: "Публичное использование фото"
+    }
+
+    emoji = {
+        lang_key: "🈳",
+        auto_orient_key: "🔄",
+        two_sides_key: "📄",
+        has_public_confirm_key: "🌐"
     }
 
     def get_selector(self) -> dict:
@@ -89,7 +96,8 @@ class RecognitionParams:
         }
 
     def __repr__(self):
-        selector = (f"{RecognitionParams.options[k]}: {v[0][v[1]]}" for k, v in self.get_selector().items())
+        selector = (f"{RecognitionParams.emoji[k]} {RecognitionParams.options[k]}: {v[0][v[1]]}"
+                    for k, v in self.get_selector().items())
         return "Настройки:\n" + "\n".join(selector)
 
 
