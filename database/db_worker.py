@@ -49,7 +49,6 @@ def update_recognition_info(database_cursor: Cursor, connector: Connection,
                             user_id: int, auto_orientate: bool = True,
                             language: Lang = Lang.ru, recognize_both: bool = True):
     """Update user recognition information"""
-    # print(str(language))
     database_cursor.execute(
         "UPDATE Recognition_information "
         "SET auto_orientate = ?, language = ?, recognize_both = ? "

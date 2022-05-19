@@ -23,13 +23,17 @@ def print_info(message: telebot.types.Message) -> None:
                                      r"[Angelina Braille Reader](http://angelina-reader.ru/)\. "
                                      r"Отправьте мне фото\, и я дам ответ\.")), parse_mode="MarkdownV2")
 
-    with open(Path("doc") / "angelina-example/jane_eyre_p0011.marked.jpg", "rb") as img:
+    with open(Path("..") / "doc/angelina-example/jane_eyre_p0011.marked.jpg", "rb") as img:
         bot.send_photo(message.chat.id, img, caption="Вот пример")
-    bot.send_message(message.chat.id, "Больше примеров входных данных "
-                                      "[на диске](https://csspbstu-my.sharepoint.com/:f:/g/"
-                                      "personal/zuev_va_edu_spbstu_ru/Egj-vMvAMj5JtmX35kTYz"
-                                      "n0BYSkJyw7BfL96AKa0i1BhMw?e=CVZMbm)",
+    bot.send_message(message.chat.id, "Примеры входных данных "
+                                      "[на диске](https://csspbstu-my.sharepoint.com/:f:/g/personal/"
+                                      "zuev_va_edu_spbstu_ru/EvFV7VaCIl5PqnKMREDnogsB8z87Qxo0ms7UGgB"
+                                      "gwCdGcg?e=ZCHrDM)",
                      parse_mode="MarkdownV2")
+    bot.send_message(message.chat.id,
+                     "\n".join(("Также доступны команды:",
+                                "/help - вызов справки",
+                                "/params - настройки бота")))
 
 
 @bot.message_handler(commands=["start"])
@@ -72,13 +76,61 @@ def add_back_row(keyboard: telebot.types.InlineKeyboardMarkup, callback_data: st
     keyboard.row(telebot.types.InlineKeyboardButton("Назад", callback_data=callback_data))
 
 
+def process_settings_callback(query: telebot.types.CallbackQuery) -> None:
+    """
+    Viewing (maybe after modifying) some parameter in bot settings
+    :param query: query with data in a format <param_name>|<[optional] new_param_value> (e.g. "lang|RU" or "lang|")
+    :return: None
+    """
+    param, selected_value = query.data.split("|")
+    if param not in RecognitionParams.options.keys():
+        return
+    db_connector = sqlite3.connect(db_name)
+    db_cursor = db_connector.cursor()
+
+    # if `selected_value` is given, change the value of `param`
+    prev_info = selector_recognition_info(query.message.chat.id, database_cursor=db_cursor)
+    if len(selected_value):
+        if selected_value in ("True", "False"):
+            selected_value = 1 if selected_value == "True" else 0
+        update_shorthand = partial(update_recognition_info,
+                                   database_cursor=db_cursor,
+                                   connector=db_connector,
+                                   user_id=query.message.chat.id)
+        if param == RecognitionParams.lang_key:
+            update_shorthand(language=selected_value, recognize_both=prev_info.two_sides,
+                             auto_orientate=prev_info.auto_orient)
+        if param == RecognitionParams.two_sides_key:
+            update_shorthand(recognize_both=selected_value, language=prev_info.lang,
+                             auto_orientate=prev_info.auto_orient)
+        if param == RecognitionParams.auto_orient_key:
+            update_shorthand(auto_orientate=selected_value, recognize_both=prev_info.two_sides,
+                             language=prev_info.lang)
+
+    # retrieve recognition settings, display the keyboard
+    recognition_info = selector_recognition_info(query.message.chat.id, database_cursor=db_cursor)
+    selector, option = recognition_info.get_selector()[param]
+    item_keyboard = telebot.types.InlineKeyboardMarkup()
+    for k, v in selector.items():
+        appendix = " (Выбрано)" if option == k else ""
+        item_keyboard.row(telebot.types.InlineKeyboardButton(f"{RecognitionParams.options[param]}: {v}{appendix}",
+                                                             callback_data=f"{param}|{str(k)}"))
+    add_back_row(item_keyboard, callback_data=change_settings)
+    bot.edit_message_text(
+        text=recognition_info,
+        chat_id=query.message.chat.id,
+        message_id=query.message.id,
+        reply_markup=item_keyboard
+    )
+
+
 @bot.callback_query_handler(func=lambda call: True)
-def callback(query: telebot.types.CallbackQuery):
+def callback(query: telebot.types.CallbackQuery) -> None:
     if query.data == hide_settings:
         bot.delete_message(query.message.chat.id, query.message.id)
+
     if query.data == change_settings:
         keyboard = telebot.types.InlineKeyboardMarkup()
-        print(RecognitionParams.options)
 
         for k, v in RecognitionParams.options.items():
             keyboard.row(telebot.types.InlineKeyboardButton(v, callback_data=f"{k}|"))
@@ -98,44 +150,8 @@ def callback(query: telebot.types.CallbackQuery):
             reply_markup=params_keyboard
         )
 
-    print(query.data)
-    param, selected_value = query.data.split("|")
-    if param in RecognitionParams.options.keys():
-        db_connector = sqlite3.connect(db_name)
-        db_cursor = db_connector.cursor()
-        prev_info = selector_recognition_info(query.message.chat.id, database_cursor=db_cursor)
-        if len(selected_value):
-            if selected_value in ("True", "False"):
-                selected_value = 1 if selected_value == "True" else 0
-            update_shorthand = partial(update_recognition_info,
-                                       database_cursor=db_cursor,
-                                       connector=db_connector,
-                                       user_id=query.message.chat.id)
-            if param == RecognitionParams.lang_key:
-                update_shorthand(language=selected_value, recognize_both=prev_info.two_sides,
-                                 auto_orientate=prev_info.auto_orient)
-            if param == RecognitionParams.two_sides_key:
-                update_shorthand(recognize_both=selected_value, language=prev_info.lang,
-                                 auto_orientate=prev_info.auto_orient)
-            if param == RecognitionParams.auto_orient_key:
-                update_shorthand(auto_orientate=selected_value, recognize_both=prev_info.two_sides,
-                                 language=prev_info.lang)
-
-        recognition_info = selector_recognition_info(query.message.chat.id, database_cursor=db_cursor)
-        selector, option = recognition_info.get_selector()[param]
-
-        item_keyboard = telebot.types.InlineKeyboardMarkup()
-        for k, v in selector.items():
-            appendix = " (Выбрано)" if option == k else ""
-            item_keyboard.row(telebot.types.InlineKeyboardButton(f"{RecognitionParams.options[param]}: {v}{appendix}",
-                                                                 callback_data=f"{param}|{str(k)}"))
-        add_back_row(item_keyboard, callback_data=change_settings)
-        bot.edit_message_text(
-            text=recognition_info,
-            chat_id=query.message.chat.id,
-            message_id=query.message.id,
-            reply_markup=item_keyboard
-        )
+    if "|" in query.data:
+        process_settings_callback(query)
 
     bot.answer_callback_query(query.id)
 

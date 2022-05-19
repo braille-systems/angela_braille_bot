@@ -57,10 +57,10 @@ class RecognitionParams:
     auto_orient_key = "find_orientation"
 
     def get_data_dict(self):
-        return {self.has_public_confirm_key: str(self.has_public_confirm),
+        return {self.has_public_confirm_key: str(bool(self.has_public_confirm)),
                 self.lang_key: self.lang.value[0],
-                self.two_sides_key: str(self.two_sides),
-                self.auto_orient_key: str(self.auto_orient)}
+                self.two_sides_key: str(bool(self.two_sides)),
+                self.auto_orient_key: str(bool(self.auto_orient))}
 
     true_false_selector = {True: "Да", False: "Нет"}
     lang_selector = {
@@ -94,6 +94,7 @@ class RecognitionParams:
 def post_form(filename: Path, params: RecognitionParams) -> str:
     files = {"file": open(file=str(filename), mode="rb")}
     data = params.get_data_dict()
+    print(data)
     url = base_url + "/upload_photo/"
     r = requests.post(url=url, files=files, data=data)
 
