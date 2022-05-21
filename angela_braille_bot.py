@@ -164,11 +164,15 @@ def callback(query: telebot.types.CallbackQuery) -> None:
     bot.answer_callback_query(query.id)
 
 
-@bot.message_handler(content_types=['photo'])
+@bot.message_handler(content_types=['photo', 'document'])
 def photo(message):
     bot.send_message(message.chat.id, "начинаю распознавание...")
     try:
-        file_id = message.photo[-1].file_id
+        try:
+            file_id = message.photo[-1].file_id
+        except Exception as _:
+            file_id = message.document.file_id
+
         file_info = bot.get_file(file_id)
         downloaded_file = bot.download_file(file_info.file_path)
 
