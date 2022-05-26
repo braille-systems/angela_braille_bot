@@ -201,7 +201,7 @@ def photo(message: telebot.types.Message) -> None:
         tmp_root = Path("tmp")  # TODO a different root if public use permitted
         tmp_root.mkdir(exist_ok=True)
         tmp_dir = Path(tempfile.mkdtemp(dir=tmp_root))
-        img_input_filename = tmp_dir / "input.jpg"
+        img_input_filename = (tmp_dir / "input").with_suffix(extension)
 
         with open(img_input_filename, "wb") as new_file:
             new_file.write(downloaded_file)
