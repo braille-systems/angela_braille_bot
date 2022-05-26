@@ -17,7 +17,9 @@ bot = telebot.TeleBot(os.environ["token"])
 os.chdir("database")
 
 
+@bot.message_handler(commands=["start", "help"])
 def print_info(message: telebot.types.Message) -> None:
+    register_if_not_yet(message)
     bot.reply_to(message, "\n".join((r"Привет\! Я робот Анжела\!",
                                      r"Я умею распознавать текст Брайля по фотографии\, "
                                      r"используя программу И\. Оводова "
@@ -37,22 +39,14 @@ def print_info(message: telebot.types.Message) -> None:
                                 "/params - настройки бота")))
 
 
-@bot.message_handler(commands=["start"])
-def send_welcome(message):
+def register_if_not_yet(message: telebot.types.Message) -> None:
     db_connector = sqlite3.connect(db_name)
     db_cursor = db_connector.cursor()
     if selector_recognition_info(message.chat.id, db_cursor):
-        bot.reply_to(message, "А Вы уже зарегистрированы в нашей базе!")
         return
     bot.send_message(message.chat.id, "Добавляем Вас в базу данных...")
     insert_new_user(database_cursor=db_cursor, connector=db_connector, user_id=message.chat.id)
     bot.send_message(message.chat.id, "Готово!")
-    print_info(message)
-
-
-@bot.message_handler(commands=["help"])
-def send_help(message):
-    print_info(message)
 
 
 hide_settings = "hide_settings"
@@ -71,6 +65,7 @@ def create_settings_message(chat_id: int) -> Tuple[str, telebot.types.InlineKeyb
 
 @bot.message_handler(commands=["params"])
 def send_settings(message: telebot.types.Message):
+    register_if_not_yet(message=message)
     settings_text, keyboard = create_settings_message(message.chat.id)
     bot.send_message(message.chat.id, text=settings_text, reply_markup=keyboard)
 
@@ -156,6 +151,7 @@ def process_settings_callback(query: telebot.types.CallbackQuery) -> None:
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback(query: telebot.types.CallbackQuery) -> None:
+    register_if_not_yet(message=query.message)
     if query.data == hide_settings:
         bot.delete_message(query.message.chat.id, query.message.id)
 
@@ -188,6 +184,7 @@ def callback(query: telebot.types.CallbackQuery) -> None:
 
 @bot.message_handler(content_types=['photo', 'document'])
 def photo(message: telebot.types.Message) -> None:
+    register_if_not_yet(message=message)
     bot.send_message(message.chat.id, "начинаю распознавание...")
     try:
         file_id = message.photo[-1].file_id if message.photo else message.document.file_id
