@@ -28,20 +28,28 @@ def selector_recognition_info(user_id: int, database_cursor: Cursor) -> Optional
         has_public_confirm=settings[0][3],
         lang=lang_inv_map[result[0][2]],
         two_sides=result[0][3],
-        auto_orient=result[0][1]
+        auto_orient=result[0][1],
+        receive_txt=settings[0][4],
+        receive_img=settings[0][5],
+        receive_msg=settings[0][6]
     )
 
 
 def update_settings(database_cursor: Cursor, connector: Connection,
                     user_id: int, email: str = None,
                     password: str = None, include_in_data: bool = False,
+                    receive_txt: bool = False, receive_msg: bool = True,
+                    receive_img: bool = True,
                     force_null_update: bool = False):
     """Update user settings"""
     database_cursor.execute(
         "UPDATE Settings "
-        "SET include_in_data = ? "
+        "SET include_in_data = ?, receive_txt = ?, receive_img = ?, receive_msg = ? "
         "WHERE user_id == ?",
         (include_in_data,
+         receive_txt,
+         receive_img,
+         receive_msg,
          user_id)
     )
     if email or force_null_update:
