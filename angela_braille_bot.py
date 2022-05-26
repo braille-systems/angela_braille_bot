@@ -44,9 +44,7 @@ def register_if_not_yet(message: telebot.types.Message) -> None:
     db_cursor = db_connector.cursor()
     if selector_recognition_info(message.chat.id, db_cursor):
         return
-    bot.send_message(message.chat.id, "Добавляем Вас в базу данных...")
     insert_new_user(database_cursor=db_cursor, connector=db_connector, user_id=message.chat.id)
-    bot.send_message(message.chat.id, "Готово!")
 
 
 hide_settings = "hide_settings"
