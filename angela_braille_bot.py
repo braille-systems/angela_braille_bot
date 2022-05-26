@@ -164,12 +164,21 @@ def callback(query: telebot.types.CallbackQuery) -> None:
     bot.answer_callback_query(query.id)
 
 
-@bot.message_handler(content_types=['photo'])
-def photo(message):
+@bot.message_handler(content_types=['photo', 'document'])
+def photo(message: telebot.types.Message) -> None:
     bot.send_message(message.chat.id, "начинаю распознавание...")
     try:
-        file_id = message.photo[-1].file_id
+        file_id = message.photo[-1].file_id if message.photo else message.document.file_id
+
         file_info = bot.get_file(file_id)
+        print(file_info.file_path)
+
+        extension = Path(file_info.file_path).suffix.lower()
+        supported_suffixes = [".pdf", ".jpg", ".jpeg", ".png"]
+        if extension not in supported_suffixes:
+            bot.send_message(message.chat.id, ("Этот тип файла не поддерживается."
+                                               f"Поддерживаемые типы: {supported_suffixes}"))
+            return
         downloaded_file = bot.download_file(file_info.file_path)
 
         tmp_root = Path("tmp")
