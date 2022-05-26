@@ -45,22 +45,32 @@ lang_inv_map = {item.value[0]: item for item in Lang}
 
 
 @dataclass
-class RecognitionParams:
+class RecognitionParams:  # TODO to separate file (e.g. params.py), create a parent class for recognition/bot params
     has_public_confirm: bool
     lang: Lang
     two_sides: bool
     auto_orient: bool
 
+    receive_txt: bool
+    receive_img: bool
+    receive_msg: bool
+
     has_public_confirm_key = "has_public_confirm"
     lang_key = "lang"
     two_sides_key = "process_2_sides"
     auto_orient_key = "find_orientation"
+    receive_txt_key = "receive_txt"
+    receive_msg_key = "receive_msg"
+    receive_img_key = "receive_img"
 
     def get_data_dict(self):
         return {self.has_public_confirm_key: str(bool(self.has_public_confirm)),
                 self.lang_key: self.lang.value[0],
                 self.two_sides_key: str(bool(self.two_sides)),
-                self.auto_orient_key: str(bool(self.auto_orient))}
+                self.auto_orient_key: str(bool(self.auto_orient)),
+                self.receive_txt_key: str(bool(self.receive_txt)),
+                self.receive_img_key: str(bool(self.receive_img)),
+                self.receive_msg_key: str(bool(self.receive_msg))}
 
     true_false_selector = {True: "Да", False: "Нет"}
     lang_selector = {
@@ -77,14 +87,21 @@ class RecognitionParams:
         lang_key: "Язык",
         auto_orient_key: "Автоориентация",
         two_sides_key: "Обе стороны",
-        has_public_confirm_key: "Публичное использование фото"
+        has_public_confirm_key: "Публичное использование фото",
+
+        receive_txt_key: "Возвращать текстовый файл",
+        receive_img_key: "Возвращать изображение",
+        receive_msg_key: "Возвращать сообщение"
     }
 
     emoji = {
         lang_key: "🈳",
         auto_orient_key: "🔄",
         two_sides_key: "📄",
-        has_public_confirm_key: "🌐"
+        has_public_confirm_key: "🌐",
+        receive_txt_key: "📋",
+        receive_img_key: "🖼️",
+        receive_msg_key: "💬"
     }
 
     def get_selector(self) -> dict:
@@ -92,7 +109,10 @@ class RecognitionParams:
             self.lang_key: [self.lang_selector, self.lang],
             self.auto_orient_key: [self.true_false_selector, self.auto_orient],
             self.two_sides_key: [self.true_false_selector, self.two_sides],
-            self.has_public_confirm_key: [self.true_false_selector, self.has_public_confirm]
+            self.has_public_confirm_key: [self.true_false_selector, self.has_public_confirm],
+            self.receive_txt_key: [self.true_false_selector, self.receive_txt],
+            self.receive_img_key: [self.true_false_selector, self.receive_img],
+            self.receive_msg_key: [self.true_false_selector, self.receive_msg]
         }
 
     def __repr__(self):

@@ -14,7 +14,7 @@ def test_selector_settings():
     db_connector = sqlite3.connect(db_name)
     db_cursor = db_connector.cursor()
 
-    assert selector_settings(-1, db_cursor)[0] == (-1, None, None, 0)
+    assert selector_settings(-1, db_cursor)[0] == (-1, None, None, 0, False, True, True)
 
 
 def test_selector_rec_info():
@@ -36,7 +36,7 @@ def test_insert():
 
     insert_new_user(db_cursor, db_connector, -2)
 
-    assert selector_settings(-2, db_cursor)[0] == (-2, None, None, 0)
+    assert selector_settings(-2, db_cursor)[0] == (-2, None, None, 0, False, True, True)
     recognition_info = selector_recognition_info(-2, db_cursor)
     assert recognition_info
     assert recognition_info.lang == Lang.ru
@@ -51,7 +51,7 @@ def test_update_settings():
 
     update_settings(db_cursor, db_connector, -1, "em-1")
 
-    assert selector_settings(-1, db_cursor)[0] == (-1, "em-1", None, 0)
+    assert selector_settings(-1, db_cursor)[0] == (-1, "em-1", None, 0, False, True, True)
     update_settings(db_cursor, db_connector, -1, force_null_update=True)
 
 
