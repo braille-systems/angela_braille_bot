@@ -100,6 +100,10 @@ def process_settings_callback(query: telebot.types.CallbackQuery) -> None:
                                    database_cursor=db_cursor,
                                    connector=db_connector,
                                    user_id=query.message.chat.id)
+        settings_update_shorthand = partial(update_settings,
+                                            database_cursor=db_cursor,
+                                            connector=db_connector,
+                                            user_id=query.message.chat.id)
         if param == RecognitionParams.lang_key:
             update_shorthand(language=selected_value, recognize_both=prev_info.two_sides,
                              auto_orientate=prev_info.auto_orient)
@@ -110,8 +114,26 @@ def process_settings_callback(query: telebot.types.CallbackQuery) -> None:
             update_shorthand(auto_orientate=selected_value, recognize_both=prev_info.two_sides,
                              language=prev_info.lang)
         if param == RecognitionParams.has_public_confirm_key:
-            update_settings(database_cursor=db_cursor, connector=db_connector, user_id=query.message.chat.id,
-                            include_in_data=selected_value)
+            settings_update_shorthand(include_in_data=selected_value,  # TODO pass structure instead
+                                      receive_txt=prev_info.receive_txt,
+                                      receive_img=prev_info.receive_img,
+                                      receive_msg=prev_info.receive_msg
+                                      )
+        if param == RecognitionParams.receive_txt_key:
+            settings_update_shorthand(receive_txt=selected_value,
+                                      include_in_data=prev_info.has_public_confirm,
+                                      receive_img=prev_info.receive_img,
+                                      receive_msg=prev_info.receive_msg)
+        if param == RecognitionParams.receive_img_key:
+            settings_update_shorthand(receive_img=selected_value,
+                                      include_in_data=prev_info.has_public_confirm,
+                                      receive_txt=prev_info.receive_txt,
+                                      receive_msg=prev_info.receive_msg)
+        if param == RecognitionParams.receive_msg_key:
+            settings_update_shorthand(receive_msg=selected_value,
+                                      include_in_data=prev_info.has_public_confirm,
+                                      receive_txt=prev_info.receive_txt,
+                                      receive_img=prev_info.receive_msg)
 
     # retrieve recognition settings, display the keyboard
     recognition_info = selector_recognition_info(query.message.chat.id, database_cursor=db_cursor)
@@ -181,7 +203,7 @@ def photo(message: telebot.types.Message) -> None:
             return
         downloaded_file = bot.download_file(file_info.file_path)
 
-        tmp_root = Path("tmp")
+        tmp_root = Path("tmp")  # TODO a different root if public use permitted
         tmp_root.mkdir(exist_ok=True)
         tmp_dir = Path(tempfile.mkdtemp(dir=tmp_root))
         img_input_filename = tmp_dir / "input.jpg"
@@ -192,14 +214,28 @@ def photo(message: telebot.types.Message) -> None:
         recognition_info = selector_recognition_info(message.chat.id, sqlite3.connect(db_name).cursor())
         img_out_filename, text_recognized = process_photo(input_filename=img_input_filename, params=recognition_info)
 
-        with open(img_out_filename, "rb") as img:
-            bot.send_photo(message.chat.id, img)
-            bot.send_message(message.chat.id,
-                             text=text_recognized if len(text_recognized)
-                             else "Брайлевский текст на изображении не обнаружен")
+        text_to_send = ""
+        if not len(text_recognized):
+            text_to_send = "Брайлевский текст на изображении не обнаружен"
+        elif not recognition_info.receive_msg:
+            text_to_send = "Распознавание успешно завершено"
+        else:
+            text_to_send = text_recognized
+        bot.send_message(message.chat.id, text=text_to_send)
+
+        if recognition_info.receive_img:
+            with open(img_out_filename, "rb") as img:
+                bot.send_photo(message.chat.id, img)
+
+        if len(text_recognized) and recognition_info.receive_txt:
+            txt_out_filename = tmp_dir / "result.txt"
+            with open(txt_out_filename, "w", encoding="utf-8") as txt_file:
+                txt_file.write(text_recognized)
+            with open(txt_out_filename, encoding="utf-8") as out_txt_file:
+                bot.send_document(message.chat.id, out_txt_file)
 
         # send_settings(message) TODO add settings after each recognition (if user chooses to show them in settings)
-
+        # TODO send link to recognized photo on Angela website
     except Exception as e:
         bot.send_message(message.chat.id, "извините, произошла ошибка")
         print(e)
