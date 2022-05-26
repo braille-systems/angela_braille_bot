@@ -13,7 +13,6 @@ lang: RU
 где уже будет HTML, из которого можно вытянуть распознанный текст и URL фото-результата.
 
 """
-from abc import abstractmethod, abstractproperty
 from dataclasses import dataclass
 from enum import Enum
 from typing import Tuple
@@ -90,9 +89,9 @@ class RecognitionParams:  # TODO to separate file (e.g. params.py), create a par
         two_sides_key: "Обе стороны",
         has_public_confirm_key: "Публичное использование фото",
 
-        receive_txt_key: "Получать текстовый файл с результатом",
-        receive_img_key: "Получать изображение с результатом",
-        receive_msg_key: "Получать сообщение с результатом"
+        receive_txt_key: "Возвращать текстовый файл",
+        receive_img_key: "Возвращать изображение",
+        receive_msg_key: "Возвращать сообщение"
     }
 
     emoji = {
